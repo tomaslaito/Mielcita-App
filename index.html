@@ -3,122 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mielcita Pro - Gestión de Cultivo</title>
+    <title>Mielcita Pro - Dashboard</title>
     <style>
-        :root { --negro: #0a0a0a; --oro: #D4AF37; --gris: #1a1a1a; --blanco: #f5f5f5; --rojo: #ff4444; }
-        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; padding: 15px; padding-bottom: 50px; }
-        h1, h2 { color: var(--oro); text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        :root { --negro: #000000; --oro: #D4AF37; --gris: #111111; --blanco: #ffffff; --rojo: #cc0000; }
+        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; }
         
-        .card { background: var(--gris); border: 1px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .flex { display: flex; gap: 10px; }
+        header { padding: 20px; border-bottom: 1px solid var(--oro); text-align: center; }
+        h1 { color: var(--oro); margin: 0; font-size: 22px; letter-spacing: 3px; text-transform: uppercase; }
         
-        input, select { width: 100%; padding: 12px; margin: 5px 0; background: #222; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .nav-bar { display: flex; justify-content: space-around; background: var(--gris); border-bottom: 1px solid #333; }
+        .nav-btn { padding: 15px; color: #888; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; border: none; background: none; cursor: pointer; }
+        .nav-btn.active { color: var(--oro); border-bottom: 2px solid var(--oro); }
+
+        .container { padding: 20px; display: none; }
+        .container.active { display: block; }
+
+        /* Dashboard Stats */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--gris); border: 1px solid var(--oro); padding: 20px; border-radius: 15px; text-align: center; }
+        .stat-number { display: block; font-size: 32px; font-weight: bold; color: var(--oro); }
+        .stat-label { font-size: 10px; color: #888; text-transform: uppercase; }
+
+        /* Form & Lists */
+        .card { background: var(--gris); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid var(--oro); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn-oro { background: var(--oro); color: black; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; text-transform: uppercase; margin-top: 5px; }
+        .btn-del { background: none; color: var(--rojo); border: 1px solid var(--rojo); padding: 5px 10px; border-radius: 5px; font-size: 10px; margin-top: 10px; }
         
-        .btn { background: var(--oro); color: black; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; margin-top: 5px; cursor: pointer; }
-        .btn-delete { background: var(--rojo); margin-top: 10px; font-size: 12px; padding: 5px; }
-        
-        .item-list { border-left: 3px solid var(--oro); padding-left: 10px; margin-top: 10px; position: relative; }
-        .tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; color: var(--oro); }
+        .list-item { padding: 10px 0; border-bottom: 1px solid #222; position: relative; }
+        .tag { background: var(--oro); color: black; font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>Mielcita Control v2</h1>
+<header>
+    <h1>El Club de la Mielcita</h1>
+</header>
 
-    <!-- SECCIÓN CARPAS -->
-    <div class="card">
-        <h2>🎪 Mis Carpas</h2>
-        <input type="text" id="carpaNombre" placeholder="Nombre (Ej: Carpa Vegetativo)">
-        <input type="text" id="carpaMedida" placeholder="Medida (Ej: 80x80x160)">
-        <button class="btn" id="btnNuevaCarpa">+ Registrar Carpa</button>
-        <div id="listaCarpas"></div>
+<div class="nav-bar">
+    <button class="nav-btn active" onclick="showTab('tab-home')">Inicio</button>
+    <button class="nav-btn" onclick="showTab('tab-carpas')">Carpas</button>
+    <button class="nav-btn" onclick="showTab('tab-plantas')">Plantas</button>
+</div>
+
+<!-- VISTA GENERAL -->
+<div id="tab-home" class="container active">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-number" id="countCarpas">0</span>
+            <span class="stat-label">Carpas Activas</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number" id="countPlantas">0</span>
+            <span class="stat-label">Total Plantas</span>
+        </div>
     </div>
+    <div id="resumenReciente"></div>
+</div>
 
-    <!-- SECCIÓN PLANTAS -->
+<!-- MÓDULO CARPAS -->
+<div id="tab-carpas" class="container">
     <div class="card">
-        <h2>🌱 Mis Plantas</h2>
-        <select id="selectCarpa"><option value="">Seleccionar Carpa...</option></select>
-        <input type="text" id="plantaGenetica" placeholder="Genética (Ej: Gorilla Glue)">
-        <input type="text" id="plantaBanco" placeholder="Banco (Ej: RQS)">
-        <input type="date" id="plantaFecha">
-        <button class="btn" id="btnNuevaPlanta">+ Añadir Planta</button>
-        <div id="listaPlantas"></div>
+        <h3>Nueva Carpa</h3>
+        <input type="text" id="cNombre" placeholder="Nombre (Ej: Carpa de Floración)">
+        <input type="text" id="cMedida" placeholder="Medida (Ej: 100x100)">
+        <button class="btn-oro" onclick="addCarpa()">Guardar Carpa</button>
     </div>
+    <div id="listaCarpasFull"></div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- MÓDULO PLANTAS -->
+<div id="tab-plantas" class="container">
+    <div class="card">
+        <h3>Nueva Planta</h3>
+        <select id="selCarpa"><option value="">Asignar a carpa...</option></select>
+        <input type="text" id="pGenetica" placeholder="Genética">
+        <input type="text" id="pBanco" placeholder="Banco">
+        <input type="date" id="pFecha">
+        <button class="btn-oro" onclick="addPlanta()">Añadir al Cultivo</button>
+    </div>
+    <div id="listaPlantasFull"></div>
+</div>
 
-        // CONFIGURACIÓN FIREBASE (MANTÉN TUS CLAVES AQUÍ)
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7ujVTiaYTMi0natEG6j49g1pSiM1mtRA",
-            authDomain: "mielcita-app.firebaseapp.com",
-            projectId: "mielcita-app",
-            storageBucket: "mielcita-app.firebasestorage.app",
-            messagingSenderId: "937808209169",
-            appId: "1:937808209169:web:f280acbc42dde75881d8b0"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // --- PEGA TUS LLAVES DE LA IMAGEN 13 ACÁ ---
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_AUTH_DOMAIN",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "TU_STORAGE_BUCKET",
+        messagingSenderId: "TU_MESSAGING_ID",
+        appId: "TU_APP_ID"
+    };
 
-        // --- FUNCIONES DE CARPAS ---
-        document.getElementById('btnNuevaCarpa').onclick = async () => {
-            const nombre = document.getElementById('carpaNombre').value;
-            const medida = document.getElementById('carpaMedida').value;
-            if(!nombre) return;
-            await addDoc(collection(db, "carpas"), { nombre, medida });
-            document.getElementById('carpaNombre').value = "";
-        };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        onSnapshot(collection(db, "carpas"), (snapshot) => {
-            const lista = document.getElementById('listaCarpas');
-            const select = document.getElementById('selectCarpa');
-            lista.innerHTML = "";
-            select.innerHTML = '<option value="">Seleccionar Carpa...</option>';
-            
-            snapshot.forEach(d => {
-                const c = d.data();
-                lista.innerHTML += `<div class="item-list">
-                    <b>${c.nombre}</b> (${c.medida})
-                    <button class="btn-delete" onclick="eliminarDoc('carpas', '${d.id}')">Eliminar</button>
-                </div>`;
-                select.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
-            });
+    // Navegación
+    window.showTab = (tabId) => {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    };
+
+    // Lógica de Carpas
+    window.addCarpa = async () => {
+        const nombre = document.getElementById('cNombre').value;
+        const medida = document.getElementById('cMedida').value;
+        if(nombre) await addDoc(collection(db, "carpas"), { nombre, medida });
+        document.getElementById('cNombre').value = "";
+    };
+
+    onSnapshot(collection(db, "carpas"), (snap) => {
+        const list = document.getElementById('listaCarpasFull');
+        const select = document.getElementById('selCarpa');
+        document.getElementById('countCarpas').innerText = snap.size;
+        list.innerHTML = "";
+        select.innerHTML = '<option value="">Asignar a carpa...</option>';
+        snap.forEach(d => {
+            const c = d.data();
+            select.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
+            list.innerHTML += `<div class="card">
+                <b>${c.nombre}</b> <small>(${c.medida})</small><br>
+                <button class="btn-del" onclick="deleteItem('carpas', '${d.id}')">Eliminar Carpa</button>
+            </div>`;
         });
+    });
 
-        // --- FUNCIONES DE PLANTAS ---
-        document.getElementById('btnNuevaPlanta').onclick = async () => {
-            const carpaId = document.getElementById('selectCarpa').value;
-            const genetica = document.getElementById('plantaGenetica').value;
-            const banco = document.getElementById('plantaBanco').value;
-            const fecha = document.getElementById('plantaFecha').value;
-            
-            if(!carpaId || !genetica) return alert("Faltan datos");
-            
-            await addDoc(collection(db, "plantas"), { carpaId, genetica, banco, fecha });
-            document.getElementById('plantaGenetica').value = "";
-        };
+    // Lógica de Plantas
+    window.addPlanta = async () => {
+        const carpaId = document.getElementById('selCarpa').value;
+        const genetica = document.getElementById('pGenetica').value;
+        const banco = document.getElementById('pBanco').value;
+        const fecha = document.getElementById('pFecha').value;
+        if(genetica && carpaId) await addDoc(collection(db, "plantas"), { carpaId, genetica, banco, fecha });
+        document.getElementById('pGenetica').value = "";
+    };
 
-        onSnapshot(collection(db, "plantas"), (snapshot) => {
-            const lista = document.getElementById('listaPlantas');
-            lista.innerHTML = "";
-            snapshot.forEach(d => {
-                const p = d.data();
-                lista.innerHTML += `<div class="item-list">
-                    <b>${p.genetica}</b> <span class="tag">${p.banco}</span><br>
-                    <small>Inicio: ${p.fecha}</small>
-                    <button class="btn-delete" onclick="eliminarDoc('plantas', '${d.id}')">Eliminar</button>
-                </div>`;
-            });
+    onSnapshot(collection(db, "plantas"), (snap) => {
+        document.getElementById('countPlantas').innerText = snap.size;
+        const list = document.getElementById('listaPlantasFull');
+        list.innerHTML = "";
+        snap.forEach(d => {
+            const p = d.data();
+            list.innerHTML += `<div class="card">
+                <b>${p.genetica}</b> <span class="tag">${p.banco}</span><br>
+                <small>Inició: ${p.fecha}</small><br>
+                <button class="btn-del" onclick="deleteItem('plantas', '${d.id}')">Eliminar Planta</button>
+            </div>`;
         });
+    });
 
-        // Función Global para Eliminar
-        window.eliminarDoc = async (col, id) => {
-            if(confirm("¿Eliminar permanentemente?")) {
-                await deleteDoc(doc(db, col, id));
-            }
-        };
-    </script>
+    window.deleteItem = async (col, id) => {
+        if(confirm("¿Eliminar este registro?")) await deleteDoc(doc(db, col, id));
+    };
+</script>
 </body>
 </html>
