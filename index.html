@@ -3,39 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mielcita Pro - Gestión</title>
+    <title>Mielcita Pro - Carpas</title>
     <style>
-        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; }
+        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; --verde: #4cd964; }
         body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; }
-        
         header { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #222; position: sticky; top: 0; background: var(--negro); z-index: 100; }
         .menu-btn { font-size: 28px; color: var(--oro); cursor: pointer; }
         .title { flex-grow: 1; text-align: center; color: var(--oro); font-weight: bold; text-transform: uppercase; }
-
         .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #111; transition: 0.3s; z-index: 200; border-right: 1px solid var(--oro); padding-top: 60px; }
         .sidebar.open { left: 0; }
         .sidebar a { display: block; padding: 20px; color: white; text-decoration: none; border-bottom: 1px solid #222; font-size: 14px; text-transform: uppercase; }
         .overlay { position: fixed; display: none; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-
         .container { padding: 20px; display: none; }
         .container.active { display: block; }
-
-        /* Tarjetas Estilo Tope de Gama */
         .card-gestion { background: var(--gris-card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #333; }
         .card-item { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--oro); }
-        
         .btn-oro { background: var(--oro); color: black; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 10px; margin-top: 10px; text-transform: uppercase; }
         .btn-del { color: var(--rojo); background: none; border: 1px solid var(--rojo); padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; }
-        
-        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .tag { background: #222; color: var(--oro); padding: 3px 7px; border-radius: 5px; font-size: 10px; text-transform: uppercase; border: 1px solid var(--oro); margin-right: 5px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .tag-dia { background: var(--oro); color: black; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; margin-right: 5px; }
+        .tag-etapa { border: 1px solid var(--oro); color: var(--oro); padding: 1px 6px; border-radius: 5px; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
-    <div class="title" id="header-title">DASHBOARD</div>
+    <div class="title" id="header-title">CARPAS</div>
 </header>
 
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
@@ -46,49 +40,24 @@
     <a href="#" onclick="navTo('plantas')">🌱 Gestión de Plantas</a>
 </nav>
 
-<!-- INICIO -->
-<div id="sec-home" class="container active">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-        <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="c-count">0</span><br><small>CARPAS</small></div>
-        <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="p-count">0</span><br><small>PLANTAS</small></div>
-    </div>
-    <div id="home-list"></div>
-</div>
-
-<!-- GESTIÓN CARPAS -->
-<div id="sec-carpas" class="container">
+<div id="sec-carpas" class="container active">
     <div class="card-gestion">
         <h4 style="margin:0 0 10px 0; color:var(--oro)">Nueva Carpa</h4>
         <input type="text" id="cnom" placeholder="Nombre (Ej: Carpa 1)">
         <input type="text" id="cmed" placeholder="Medidas (Ej: 80x80)">
-        <button class="btn-oro" onclick="addCarpa()">Registrar Carpa</button>
-    </div>
-    <h3 style="font-size:14px; color:#888">Listado de Carpas</h3>
-    <div id="edit-carpas-list"></div>
-</div>
-
-<!-- GESTIÓN PLANTAS -->
-<div id="sec-plantas" class="container">
-    <div class="card-gestion">
-        <h4 style="margin:0 0 10px 0; color:var(--oro)">Nueva Planta</h4>
-        <select id="psel-c"></select>
-        <input type="text" id="pgen" placeholder="Genética">
-        <input type="text" id="pban" placeholder="Banco (Ej: Ecoseeds)">
-        <select id="ptipo">
-            <option value="Semilla">Semilla</option>
-            <option value="Esqueje">Esqueje</option>
-        </select>
-        <input type="date" id="pfec">
-        <select id="petapa">
-            <option value="Germinación">Etapa: Germinación</option>
+        <input type="date" id="cfec" title="Fecha de inicio del ciclo">
+        <select id="cetapa">
             <option value="Vegetativo">Etapa: Vegetativo</option>
             <option value="Floración">Etapa: Floración</option>
         </select>
-        <button class="btn-oro" onclick="addPlanta()">Añadir al Cultivo</button>
+        <button class="btn-oro" onclick="addCarpa()">Registrar Carpa</button>
     </div>
-    <h3 style="font-size:14px; color:#888">Listado de Plantas</h3>
-    <div id="edit-plantas-list"></div>
+    <h3 style="font-size:14px; color:#888; margin-bottom: 15px;">Tus Ciclos Activos</h3>
+    <div id="edit-carpas-list"></div>
 </div>
+
+<div id="sec-home" class="container"></div>
+<div id="sec-plantas" class="container"></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -106,6 +75,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const calcularDias = (fechaInicio) => {
+        if (!fechaInicio) return "Día 0";
+        const inicio = new Date(fechaInicio);
+        const hoy = new Date();
+        const diferencia = hoy - inicio;
+        const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+        return `Día ${dias >= 0 ? dias : 0}`;
+    };
+
     window.toggleMenu = () => {
         document.getElementById('sidebar').classList.toggle('open');
         const ov = document.getElementById('overlay');
@@ -119,60 +97,40 @@
         toggleMenu();
     };
 
-    // --- CARPAS ---
     window.addCarpa = async () => {
         const n = document.getElementById('cnom').value;
         const m = document.getElementById('cmed').value;
-        if(n) await addDoc(collection(db, "carpas"), { nombre: n, medida: m });
-        document.getElementById('cnom').value = "";
-    };
-
-    onSnapshot(collection(db, "carpas"), (snap) => {
-        const hL = document.getElementById('home-list');
-        const eL = document.getElementById('edit-carpas-list');
-        const sel = document.getElementById('psel-c');
-        document.getElementById('c-count').innerText = snap.size;
-        hL.innerHTML = ""; eL.innerHTML = ""; sel.innerHTML = "";
-        snap.forEach(d => {
-            const c = d.data();
-            hL.innerHTML += `<div class="card-item" onclick="navTo('carpas')"><div><b>🎪 ${c.nombre}</b><br><small style="color:#666">${c.medida}</small></div><span style="color:#4cd964;font-size:10px">ACTIVA</span></div>`;
-            eL.innerHTML += `<div class="card-item"><span>${c.nombre}</span><button class="btn-del" onclick="delItem('carpas','${d.id}')">ELIMINAR</button></div>`;
-            sel.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
-        });
-    });
-
-    // --- PLANTAS ---
-    window.addPlanta = async () => {
-        const cId = document.getElementById('psel-c').value;
-        const gen = document.getElementById('pgen').value;
-        const ban = document.getElementById('pban').value;
-        const tip = document.getElementById('ptipo').value;
-        const fec = document.getElementById('pfec').value;
-        const eta = document.getElementById('petapa').value;
-        if(gen && cId) {
-            await addDoc(collection(db, "plantas"), { carpaId: cId, genetica: gen, banco: ban, tipo: tip, fecha: fec, etapa: eta });
-            document.getElementById('pgen').value = "";
+        const f = document.getElementById('cfec').value;
+        const e = document.getElementById('cetapa').value;
+        if(n && f) {
+            await addDoc(collection(db, "carpas"), { nombre: n, medida: m, fechaInicio: f, etapa: e });
+            document.getElementById('cnom').value = "";
+            document.getElementById('cmed').value = "";
+            document.getElementById('cfec').value = "";
         }
     };
 
-    onSnapshot(collection(db, "plantas"), (snap) => {
-        document.getElementById('p-count').innerText = snap.size;
-        const pL = document.getElementById('edit-plantas-list');
-        pL.innerHTML = "";
+    onSnapshot(collection(db, "carpas"), (snap) => {
+        const eL = document.getElementById('edit-carpas-list');
+        eL.innerHTML = "";
         snap.forEach(d => {
-            const p = d.data();
-            pL.innerHTML += `<div class="card-item">
-                <div style="flex-grow:1">
-                    <b>${p.genetica}</b> <span class="tag">${p.etapa}</span><br>
-                    <small style="color:#888"><span class="tag" style="border:none;padding:0">${p.tipo}</span> ${p.banco} | ${p.fecha || 'N/A'}</small>
-                </div>
-                <button class="btn-del" onclick="delItem('plantas','${d.id}')">ELIMINAR</button>
-            </div>`;
+            const c = d.data();
+            const diaActual = calcularDias(c.fechaInicio);
+            eL.innerHTML += `
+                <div class="card-item">
+                    <div style="flex-grow:1">
+                        <span class="tag-dia">${diaActual}</span>
+                        <span class="tag-etapa">${c.etapa || 'Vegetativo'}</span><br>
+                        <b style="font-size:16px; display:inline-block; margin-top:5px;">${c.nombre}</b><br>
+                        <small style="color:#666">${c.medida} • Inicio: ${c.fechaInicio}</small>
+                    </div>
+                    <button class="btn-del" onclick="delItem('carpas','${d.id}')">BORRAR</button>
+                </div>`;
         });
     });
 
     window.delItem = async (col, id) => {
-        if(confirm("¿Seguro que querés borrar este registro?")) await deleteDoc(doc(db, col, id));
+        if(confirm("¿Eliminar carpa y registros?")) await deleteDoc(doc(db, col, id));
     };
 </script>
 </body>
