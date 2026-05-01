@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Club de la Mielcita - Pro Dashboard</title>
+    <!-- Librerías de Gráficos y Firebase -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --negro: #0a0a0a; --oro: #D4AF37; --gris: #1a1a1a; --blanco: #f5f5f5; }
+        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; }
+        h1 { color: var(--oro); text-align: center; font-weight: 700; letter-spacing: 1px; margin-bottom: 30px; }
+        
+        .card { background: var(--gris); border: 1px solid #333; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+        .card h3 { color: var(--oro); margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; }
+
+        input, select { width: 100%; padding: 14px; margin: 10px 0; background: #222; border: 1px solid #444; color: white; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        input:focus { border-color: var(--oro); outline: none; }
+
+        button { background: linear-gradient(45deg, #D4AF37, #FFD700); color: black; border: none; padding: 16px; width: 100%; font-weight: bold; border-radius: 10px; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        
+        #chartContainer { height: 220px; margin-top: 10px; }
+        .log-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.85rem; display: flex; justify-content: space-between; }
+        .log-item span { color: var(--oro); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <h1>EL CLUB DE LA MIELCITA</h1>
+
+    <!-- Registro de Cultivo -->
+    <div class="card">
+        <h3>Registro Manual</h3>
+        <select id="tipoAccion">
+            <option value="Riego">💧 Riego con Agua</option>
+            <option value="Nutrientes">🧪 Nutrientes (Mielcita Mix)</option>
+            <option value="Clima">🌡️ Ambiente / Otros</option>
+        </select>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="ph" step="0.1" placeholder="pH">
+            <input type="number" id="ec" step="0.1" placeholder="EC">
+        </div>
+        <input type="text" id="notas" placeholder="Notas (Ej: Poda, dosis, carencias)">
+        <button id="btnGuardar">Guardar en la Nube</button>
+    </div>
+
+    <!-- Gráfico de Salud -->
+    <div class="card">
+        <h3>Evolución de pH</h3>
+        <div id="chartContainer">
+            <canvas id="phChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="card">
+        <h3>Bitácora de Seguimiento</h3>
+        <div id="historial">Cargando datos del club...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN DE FIREBASE[span_1](start_span)[span_1](end_span)
+        // Reemplaza estos valores con los de tu consola Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_PROYECTO.firebaseapp.com",
+            projectId: "TU_PROYECTO_ID",
+            storageBucket: "TU_PROYECTO.appspot.com",
+            messagingSenderId: "TU_ID",
+            appId: "TU_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Inicializar Gráfico
+        const ctx = document.getElementById('phChart').getContext('2d');
+        const phChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'pH', data: [], borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.1)', fill: true, tension: 0.4 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 5, max: 8 }, x: { display: false } } }
+        });
+
+        // Función Guardar[span_2](start_span)[span_2](end_span)
+        document.getElementById('btnGuardar').onclick = async () => {
+            const phVal = parseFloat(document.getElementById('ph').value);
+            if(!phVal) return alert("Por favor, ingresa el pH medido.");
+
+            try {
+                await addDoc(collection(db, "mielcita_logs"), {
+                    ph: phVal,
+                    ec: document.getElementById('ec').value || "N/A",
+                    tipo: document.getElementById('tipoAccion').value,
+                    notas: document.getElementById('notas').value,
+                    timestamp: new Date()
+                });
+                document.getElementById('ph').value = "";
+                document.getElementById('ec').value = "";
+                document.getElementById('notas').value = "";
+                alert("¡Registro guardado exitosamente!");
+            } catch (e) {
+                alert("Error al guardar: " + e.message);
+            }
+        };
+
+        // Escucha en Tiempo Real[span_3](start_span)[span_3](end_span)
+        const q = query(collection(db, "mielcita_logs"), orderBy("timestamp", "desc"), limit(12));
+        onSnapshot(q, (snapshot) => {
+            const historial = document.getElementById('historial');
+            historial.innerHTML = "";
+            const labels = [];
+            const dataPoints = [];
+
+            snapshot.docs.reverse().forEach(doc => {
+                const log = doc.data();
+                const hora = log.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                historial.innerHTML = `<div class="log-item"><span>${hora}</span> ${log.tipo} (pH: ${log.ph})</div>` + historial.innerHTML;
+                
+                labels.push(hora);
+                dataPoints.push(log.ph);
+            });
+
+            phChart.data.labels = labels;
+            phChart.data.datasets[0].data = dataPoints;
+            phChart.update();
+        });
+    </script>
+</body>
+</html>
