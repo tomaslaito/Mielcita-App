@@ -38,6 +38,7 @@
     <a href="#" onclick="navTo('home')">🏠 Inicio</a>
     <a href="#" onclick="navTo('carpas')">🎪 Gestión de Carpas</a>
     <a href="#" onclick="navTo('plantas')">🌱 Gestión de Plantas</a>
+    <a href="#" onclick="navTo('riego')">💧 Registro de Riego</a>
 </nav>
 
 <div id="sec-home" class="container active">
@@ -45,7 +46,7 @@
         <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="h-c-count">0</span><br><small>CARPAS</small></div>
         <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="h-p-count">0</span><br><small>PLANTAS</small></div>
     </div>
-    <h3 style="font-size:14px; color:#888;">Resumen de Cultivos</h3>
+    <h3 style="font-size:14px; color:#888;">Ciclos Activos</h3>
     <div id="home-carpas-render"></div>
 </div>
 
@@ -82,9 +83,29 @@
     <div id="plantas-list-render"></div>
 </div>
 
+<!-- NUEVA SECCIÓN RIEGO -->
+<div id="sec-riego" class="container">
+    <div class="card-gestion">
+        <h4 style="margin:0 0 10px 0; color:var(--oro)">Programar Riego</h4>
+        <select id="rsel-carpa"></select>
+        <input type="date" id="rfec">
+        <input type="number" id="rml" placeholder="Cantidad Total (ml)">
+        <select id="rtipo" onchange="toggleFert()">
+            <option value="Agua">Solo Agua</option>
+            <option value="Fertilizante">Con Fertilizante</option>
+        </select>
+        <div id="fert-box" style="display:none">
+            <input type="text" id="rfert-nom" placeholder="Nombre del Fertilizante">
+            <input type="number" id="rfert-ml" placeholder="Fertilizante (ml)">
+        </div>
+        <button class="btn-oro" onclick="addRiego()">Registrar Riego</button>
+    </div>
+    <div id="riego-list-render"></div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD7ujVTiYTmi0nateG6j49g1",
@@ -117,6 +138,12 @@
         toggleMenu();
     };
 
+    window.toggleFert = () => {
+        const t = document.getElementById('rtipo').value;
+        document.getElementById('fert-box').style.display = t === 'Fertilizante' ? 'block' : 'none';
+    };
+
+    // --- CARPAS ---
     window.addCarpa = async () => {
         const n = document.getElementById('cnom').value;
         const m = document.getElementById('cmed').value;
@@ -132,8 +159,9 @@
         const hRender = document.getElementById('home-carpas-render');
         const cRender = document.getElementById('carpas-list-render');
         const pSel = document.getElementById('psel-carpa');
+        const rSel = document.getElementById('rsel-carpa');
         document.getElementById('h-c-count').innerText = snap.size;
-        hRender.innerHTML = ""; cRender.innerHTML = ""; pSel.innerHTML = "";
+        hRender.innerHTML = ""; cRender.innerHTML = ""; pSel.innerHTML = ""; rSel.innerHTML = "";
         snap.forEach(d => {
             const c = d.data();
             const dias = calcularDias(c.fechaInicio);
@@ -148,9 +176,11 @@
             hRender.innerHTML += html;
             cRender.innerHTML += html;
             pSel.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
+            rSel.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
         });
     });
 
+    // --- PLANTAS ---
     window.addPlanta = async () => {
         const cid = document.getElementById('psel-carpa').value;
         const gen = document.getElementById('pgen').value;
@@ -175,6 +205,43 @@
                     <small style="color:#888">${p.banco} | ${p.fecha || 'Sin fecha'}</small>
                 </div>
                 <button class="btn-del" onclick="delItem('plantas','${d.id}')">BORRAR</button>
+            </div>`;
+        });
+    });
+
+    // --- RIEGO ---
+    window.addRiego = async () => {
+        const cid = document.getElementById('rsel-carpa').value;
+        const fec = document.getElementById('rfec').value;
+        const ml = document.getElementById('rml').value;
+        const tip = document.getElementById('rtipo').value;
+        const fnom = document.getElementById('rfert-nom').value;
+        const fml = document.getElementById('rfert-ml').value;
+
+        if(cid && fec && ml) {
+            await addDoc(collection(db, "riegos"), { 
+                carpaId: cid, fecha: fec, ml: ml, tipo: tip, 
+                fertNom: tip === 'Fertilizante' ? fnom : '', 
+                fertMl: tip === 'Fertilizante' ? fml : '' 
+            });
+            alert("Riego registrado!");
+            document.getElementById('rml').value = "";
+        }
+    };
+
+    onSnapshot(query(collection(db, "riegos"), orderBy("fecha", "desc")), (snap) => {
+        const rRender = document.getElementById('riego-list-render');
+        rRender.innerHTML = "";
+        snap.forEach(d => {
+            const r = d.data();
+            rRender.innerHTML += `<div class="card-item">
+                <div style="flex-grow:1">
+                    <span class="badge-oro">${r.ml} ml</span> 
+                    <span class="badge-etapa" style="border-color:${r.tipo === 'Agua' ? '#4cd964' : '#D4AF37'}; color:${r.tipo === 'Agua' ? '#4cd964' : '#D4AF37'}">${r.tipo}</span><br>
+                    <b style="font-size:14px">${r.fecha}</b><br>
+                    ${r.tipo === 'Fertilizante' ? `<small style="color:var(--oro)">${r.fertNom}: ${r.fertMl}ml</small>` : ''}
+                </div>
+                <button class="btn-del" onclick="delItem('riegos','${d.id}')">BORRAR</button>
             </div>`;
         });
     });
