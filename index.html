@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mielcita Pro - Carpas</title>
+    <title>Mielcita Pro</title>
     <style>
-        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; --verde: #4cd964; }
+        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; }
         body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; }
         header { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #222; position: sticky; top: 0; background: var(--negro); z-index: 100; }
         .menu-btn { font-size: 28px; color: var(--oro); cursor: pointer; }
@@ -19,10 +19,10 @@
         .card-gestion { background: var(--gris-card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #333; }
         .card-item { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--oro); }
         .btn-oro { background: var(--oro); color: black; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 10px; margin-top: 10px; text-transform: uppercase; }
-        .btn-del { color: var(--rojo); background: none; border: 1px solid var(--rojo); padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+        .btn-del { color: var(--rojo); background: none; border: 1px solid var(--rojo); padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
-        .tag-dia { background: var(--oro); color: black; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; margin-right: 5px; }
-        .tag-etapa { border: 1px solid var(--oro); color: var(--oro); padding: 1px 6px; border-radius: 5px; font-size: 10px; text-transform: uppercase; }
+        .badge-oro { background: var(--oro); color: black; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; margin-right: 5px; }
+        .badge-etapa { border: 1px solid var(--oro); color: var(--oro); padding: 1px 6px; border-radius: 5px; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -40,20 +40,27 @@
     <a href="#" onclick="navTo('plantas')">🌱 Gestión de Plantas</a>
 </nav>
 
+<!-- SECCIÓN CARPAS -->
 <div id="sec-carpas" class="container active">
     <div class="card-gestion">
         <h4 style="margin:0 0 10px 0; color:var(--oro)">Nueva Carpa</h4>
         <input type="text" id="cnom" placeholder="Nombre (Ej: Carpa 1)">
         <input type="text" id="cmed" placeholder="Medidas (Ej: 80x80)">
-        <input type="date" id="cfec" title="Fecha de inicio del ciclo">
+        
+        <label style="font-size: 12px; color: #888;">Fecha de Inicio del Ciclo:</label>
+        <input type="date" id="cfec">
+        
+        <label style="font-size: 12px; color: #888;">Etapa Actual:</label>
         <select id="cetapa">
-            <option value="Vegetativo">Etapa: Vegetativo</option>
-            <option value="Floración">Etapa: Floración</option>
+            <option value="Vegetativo">Vegetativo</option>
+            <option value="Floración">Floración</option>
         </select>
-        <button class="btn-oro" onclick="addCarpa()">Registrar Carpa</button>
+        
+        <button class="btn-oro" onclick="addCarpa()">REGISTRAR CARPA</button>
     </div>
-    <h3 style="font-size:14px; color:#888; margin-bottom: 15px;">Tus Ciclos Activos</h3>
-    <div id="edit-carpas-list"></div>
+    
+    <h3 style="font-size:14px; color:#888; margin-bottom: 15px;">Listado de Carpas</h3>
+    <div id="carpas-list-render"></div>
 </div>
 
 <div id="sec-home" class="container"></div>
@@ -75,12 +82,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const calcularDias = (fechaInicio) => {
-        if (!fechaInicio) return "Día 0";
-        const inicio = new Date(fechaInicio);
+    const calcularDias = (fecha) => {
+        if (!fecha) return "Día 0";
+        const inicio = new Date(fecha);
         const hoy = new Date();
-        const diferencia = hoy - inicio;
-        const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+        const diff = hoy - inicio;
+        const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
         return `Día ${dias >= 0 ? dias : 0}`;
     };
 
@@ -102,35 +109,42 @@
         const m = document.getElementById('cmed').value;
         const f = document.getElementById('cfec').value;
         const e = document.getElementById('cetapa').value;
+        
         if(n && f) {
-            await addDoc(collection(db, "carpas"), { nombre: n, medida: m, fechaInicio: f, etapa: e });
+            await addDoc(collection(db, "carpas"), { 
+                nombre: n, 
+                medida: m, 
+                fechaInicio: f, 
+                etapa: e 
+            });
             document.getElementById('cnom').value = "";
             document.getElementById('cmed').value = "";
             document.getElementById('cfec').value = "";
+        } else {
+            alert("Completa Nombre y Fecha de Inicio");
         }
     };
 
     onSnapshot(collection(db, "carpas"), (snap) => {
-        const eL = document.getElementById('edit-carpas-list');
-        eL.innerHTML = "";
+        const render = document.getElementById('carpas-list-render');
+        render.innerHTML = "";
         snap.forEach(d => {
             const c = d.data();
-            const diaActual = calcularDias(c.fechaInicio);
-            eL.innerHTML += `
+            render.innerHTML += `
                 <div class="card-item">
                     <div style="flex-grow:1">
-                        <span class="tag-dia">${diaActual}</span>
-                        <span class="tag-etapa">${c.etapa || 'Vegetativo'}</span><br>
-                        <b style="font-size:16px; display:inline-block; margin-top:5px;">${c.nombre}</b><br>
-                        <small style="color:#666">${c.medida} • Inicio: ${c.fechaInicio}</small>
+                        <span class="badge-oro">${calcularDias(c.fechaInicio)}</span>
+                        <span class="badge-etapa">${c.etapa || 'Vegetativo'}</span><br>
+                        <b style="font-size:16px; display:inline-block; margin-top:8px;">${c.nombre}</b><br>
+                        <small style="color:#666">${c.medida || 'S/M'} • Inicio: ${c.fechaInicio}</small>
                     </div>
-                    <button class="btn-del" onclick="delItem('carpas','${d.id}')">BORRAR</button>
+                    <button class="btn-del" onclick="delItem('carpas','${d.id}')">ELIMINAR</button>
                 </div>`;
         });
     });
 
     window.delItem = async (col, id) => {
-        if(confirm("¿Eliminar carpa y registros?")) await deleteDoc(doc(db, col, id));
+        if(confirm("¿Eliminar este registro?")) await deleteDoc(doc(db, col, id));
     };
 </script>
 </body>
