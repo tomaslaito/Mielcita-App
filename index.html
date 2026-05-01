@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mielcita Pro</title>
     <style>
-        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; }
+        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; --azul: #0a84ff; }
         body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; overflow-x: hidden; }
         header { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #222; position: sticky; top: 0; background: var(--negro); z-index: 100; }
         .menu-btn { font-size: 28px; color: var(--oro); cursor: pointer; }
@@ -18,6 +18,7 @@
         .container.active { display: block; }
         .card-gestion { background: var(--gris-card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #333; }
         .card-item { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--oro); }
+        .alert-card { border-left: 3px solid var(--rojo); background: #2a1010; padding: 12px; border-radius: 10px; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
         .btn-oro { background: var(--oro); color: black; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 10px; margin-top: 10px; text-transform: uppercase; cursor: pointer; }
         .btn-del { color: var(--rojo); background: none; border: 1px solid var(--rojo); padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
@@ -41,7 +42,9 @@
     <a href="#" onclick="navTo('riego')">💧 Registro de Riego</a>
 </nav>
 
+<!-- INICIO CON ALERTAS -->
 <div id="sec-home" class="container active">
+    <div id="alert-zone"></div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
         <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="h-c-count">0</span><br><small>CARPAS</small></div>
         <div class="card-gestion" style="text-align:center"><span style="font-size:24px;color:var(--oro);font-weight:bold" id="h-p-count">0</span><br><small>PLANTAS</small></div>
@@ -50,62 +53,41 @@
     <div id="home-carpas-render"></div>
 </div>
 
+<!-- GESTIÓN CARPAS CON FOTOPERIODO -->
 <div id="sec-carpas" class="container">
     <div class="card-gestion">
         <h4 style="margin:0 0 10px 0; color:var(--oro)">Nueva Carpa</h4>
         <input type="text" id="cnom" placeholder="Nombre (Ej: Carpa 1)">
         <input type="text" id="cmed" placeholder="Medidas (Ej: 80x80)">
-        <label style="font-size:11px; color:#888">Fecha Inicio Ciclo:</label>
+        <label style="font-size:11px; color:#888">Fecha Inicio Germinación:</label>
         <input type="date" id="cfec">
-        <select id="cetapa">
-            <option value="Germinación">Germinación</option>
-            <option value="Vegetativo">Vegetativo</option>
-            <option value="Floración">Floración</option>
-        </select>
         <button class="btn-oro" onclick="addCarpa()">Registrar Carpa</button>
     </div>
     <div id="carpas-list-render"></div>
 </div>
 
-<div id="sec-plantas" class="container">
-    <div class="card-gestion">
-        <h4 style="margin:0 0 10px 0; color:var(--oro)">Nueva Planta</h4>
-        <select id="psel-carpa"></select>
-        <input type="text" id="pgen" placeholder="Genética">
-        <input type="text" id="pban" placeholder="Banco (Ej: Ecoseeds)">
-        <select id="ptipo">
-            <option value="Semilla">Semilla</option>
-            <option value="Esqueje">Esqueje</option>
-        </select>
-        <input type="date" id="pfec" title="Fecha germinación">
-        <button class="btn-oro" onclick="addPlanta()">Añadir Planta</button>
-    </div>
-    <div id="plantas-list-render"></div>
-</div>
+<div id="sec-plantas" class="container"></div>
+<div id="sec-riego" class="container"></div>
 
-<!-- NUEVA SECCIÓN RIEGO -->
-<div id="sec-riego" class="container">
-    <div class="card-gestion">
-        <h4 style="margin:0 0 10px 0; color:var(--oro)">Programar Riego</h4>
-        <select id="rsel-carpa"></select>
-        <input type="date" id="rfec">
-        <input type="number" id="rml" placeholder="Cantidad Total (ml)">
-        <select id="rtipo" onchange="toggleFert()">
-            <option value="Agua">Solo Agua</option>
-            <option value="Fertilizante">Con Fertilizante</option>
+<!-- MODAL CAMBIO ETAPA -->
+<div id="modal-etapa" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:300; padding:20px; box-sizing:border-box;">
+    <div class="card-gestion" style="margin-top:100px;">
+        <h3 id="etapa-carpa-nom" style="color:var(--oro)">Carpa</h3>
+        <label>Nueva Etapa:</label>
+        <select id="new-etapa-val">
+            <option value="Vegetativo">Pasar a Vegetativo</option>
+            <option value="Floración">Pasar a Floración</option>
         </select>
-        <div id="fert-box" style="display:none">
-            <input type="text" id="rfert-nom" placeholder="Nombre del Fertilizante">
-            <input type="number" id="rfert-ml" placeholder="Fertilizante (ml)">
-        </div>
-        <button class="btn-oro" onclick="addRiego()">Registrar Riego</button>
+        <label>Fecha del cambio:</label>
+        <input type="date" id="new-etapa-fec">
+        <button class="btn-oro" onclick="saveEtapa()">Guardar Cambio</button>
+        <button class="btn-oro" style="background:#333; color:white;" onclick="closeEtapa()">Cancelar</button>
     </div>
-    <div id="riego-list-render"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD7ujVTiYTmi0nateG6j49g1",
@@ -119,10 +101,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    let selectedCarpaId = null;
+
     const calcularDias = (f) => {
-        if(!f) return "Día 0";
-        const d = Math.floor((new Date() - new Date(f)) / (1000*60*60*24));
-        return `Día ${d >= 0 ? d : 0}`;
+        if(!f) return 0;
+        return Math.floor((new Date() - new Date(f)) / (1000*60*60*24));
     };
 
     window.toggleMenu = () => {
@@ -135,12 +118,7 @@
         document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
         document.getElementById('sec-'+s).classList.add('active');
         document.getElementById('header-title').innerText = s.toUpperCase();
-        toggleMenu();
-    };
-
-    window.toggleFert = () => {
-        const t = document.getElementById('rtipo').value;
-        document.getElementById('fert-box').style.display = t === 'Fertilizante' ? 'block' : 'none';
+        if(document.getElementById('sidebar').classList.contains('open')) toggleMenu();
     };
 
     // --- CARPAS ---
@@ -148,106 +126,89 @@
         const n = document.getElementById('cnom').value;
         const m = document.getElementById('cmed').value;
         const f = document.getElementById('cfec').value;
-        const e = document.getElementById('cetapa').value;
         if(n && f) {
-            await addDoc(collection(db, "carpas"), { nombre: n, medida: m, fechaInicio: f, etapa: e });
-            document.getElementById('cnom').value = ""; document.getElementById('cmed').value = ""; document.getElementById('cfec').value = "";
+            await addDoc(collection(db, "carpas"), { 
+                nombre: n, medida: m, fechaInicio: f, etapa: 'Germinación', 
+                historial: { germinacion: f } 
+            });
+            document.getElementById('cnom').value = "";
         }
     };
 
+    window.openEtapa = (id, nom) => {
+        selectedCarpaId = id;
+        document.getElementById('etapa-carpa-nom').innerText = nom;
+        document.getElementById('modal-etapa').style.display = 'block';
+    };
+
+    window.closeEtapa = () => { document.getElementById('modal-etapa').style.display = 'none'; };
+
+    window.saveEtapa = async () => {
+        const e = document.getElementById('new-etapa-val').value;
+        const f = document.getElementById('new-etapa-fec').value;
+        if(f) {
+            const ref = doc(db, "carpas", selectedCarpaId);
+            await updateDoc(ref, { 
+                etapa: e, 
+                [`historial.${e.toLowerCase()}`]: f 
+            });
+            closeEtapa();
+        }
+    };
+
+    // --- ALERTAS LÓGICA ---
+    const checkAlerts = (carpas, riegos) => {
+        const az = document.getElementById('alert-zone');
+        az.innerHTML = "";
+        carpas.forEach(c => {
+            const lastRiego = riegos.find(r => r.carpaId === c.id);
+            const diasSinAgua = lastRiego ? calcularDias(lastRiego.fecha) : calcularDias(c.fechaInicio);
+            
+            if(diasSinAgua >= 3) {
+                az.innerHTML += `<div class="alert-card">⚠️ <b>${c.nombre}</b>: Necesita riego (hace ${diasSinAgua} días)</div>`;
+            }
+        });
+    };
+
+    let allCarpas = [];
+    let allRiegos = [];
+
     onSnapshot(collection(db, "carpas"), (snap) => {
+        allCarpas = [];
         const hRender = document.getElementById('home-carpas-render');
         const cRender = document.getElementById('carpas-list-render');
-        const pSel = document.getElementById('psel-carpa');
-        const rSel = document.getElementById('rsel-carpa');
         document.getElementById('h-c-count').innerText = snap.size;
-        hRender.innerHTML = ""; cRender.innerHTML = ""; pSel.innerHTML = ""; rSel.innerHTML = "";
+        hRender.innerHTML = ""; cRender.innerHTML = "";
+        
         snap.forEach(d => {
-            const c = d.data();
-            const dias = calcularDias(c.fechaInicio);
+            const c = d.data(); c.id = d.id;
+            allCarpas.push(c);
+            const diasTotales = calcularDias(c.fechaInicio);
             const html = `<div class="card-item">
                 <div style="flex-grow:1">
-                    <span class="badge-oro">${dias}</span> <span class="badge-etapa">${c.etapa}</span><br>
+                    <span class="badge-oro">Día ${diasTotales}</span> <span class="badge-etapa">${c.etapa}</span><br>
                     <b style="font-size:16px; display:inline-block; margin-top:8px;">${c.nombre}</b><br>
                     <small style="color:#666">${c.medida} • Inicio: ${c.fechaInicio}</small>
                 </div>
-                <button class="btn-del" onclick="delItem('carpas','${d.id}')">BORRAR</button>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                    <button class="btn-del" style="color:var(--oro); border-color:var(--oro)" onclick="openEtapa('${d.id}','${c.nombre}')">ETAPA</button>
+                    <button class="btn-del" onclick="delItem('carpas','${d.id}')">BORRAR</button>
+                </div>
             </div>`;
             hRender.innerHTML += html;
             cRender.innerHTML += html;
-            pSel.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
-            rSel.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
         });
+        checkAlerts(allCarpas, allRiegos);
     });
-
-    // --- PLANTAS ---
-    window.addPlanta = async () => {
-        const cid = document.getElementById('psel-carpa').value;
-        const gen = document.getElementById('pgen').value;
-        const ban = document.getElementById('pban').value;
-        const tip = document.getElementById('ptipo').value;
-        const fec = document.getElementById('pfec').value;
-        if(gen && cid) {
-            await addDoc(collection(db, "plantas"), { carpaId: cid, genetica: gen, banco: ban, tipo: tip, fecha: fec });
-            document.getElementById('pgen').value = ""; document.getElementById('pban').value = ""; document.getElementById('pfec').value = "";
-        }
-    };
-
-    onSnapshot(collection(db, "plantas"), (snap) => {
-        document.getElementById('h-p-count').innerText = snap.size;
-        const pRender = document.getElementById('plantas-list-render');
-        pRender.innerHTML = "";
-        snap.forEach(d => {
-            const p = d.data();
-            pRender.innerHTML += `<div class="card-item">
-                <div style="flex-grow:1">
-                    <b>${p.genetica}</b> <span class="badge-etapa">${p.tipo}</span><br>
-                    <small style="color:#888">${p.banco} | ${p.fecha || 'Sin fecha'}</small>
-                </div>
-                <button class="btn-del" onclick="delItem('plantas','${d.id}')">BORRAR</button>
-            </div>`;
-        });
-    });
-
-    // --- RIEGO ---
-    window.addRiego = async () => {
-        const cid = document.getElementById('rsel-carpa').value;
-        const fec = document.getElementById('rfec').value;
-        const ml = document.getElementById('rml').value;
-        const tip = document.getElementById('rtipo').value;
-        const fnom = document.getElementById('rfert-nom').value;
-        const fml = document.getElementById('rfert-ml').value;
-
-        if(cid && fec && ml) {
-            await addDoc(collection(db, "riegos"), { 
-                carpaId: cid, fecha: fec, ml: ml, tipo: tip, 
-                fertNom: tip === 'Fertilizante' ? fnom : '', 
-                fertMl: tip === 'Fertilizante' ? fml : '' 
-            });
-            alert("Riego registrado!");
-            document.getElementById('rml').value = "";
-        }
-    };
 
     onSnapshot(query(collection(db, "riegos"), orderBy("fecha", "desc")), (snap) => {
-        const rRender = document.getElementById('riego-list-render');
-        rRender.innerHTML = "";
-        snap.forEach(d => {
-            const r = d.data();
-            rRender.innerHTML += `<div class="card-item">
-                <div style="flex-grow:1">
-                    <span class="badge-oro">${r.ml} ml</span> 
-                    <span class="badge-etapa" style="border-color:${r.tipo === 'Agua' ? '#4cd964' : '#D4AF37'}; color:${r.tipo === 'Agua' ? '#4cd964' : '#D4AF37'}">${r.tipo}</span><br>
-                    <b style="font-size:14px">${r.fecha}</b><br>
-                    ${r.tipo === 'Fertilizante' ? `<small style="color:var(--oro)">${r.fertNom}: ${r.fertMl}ml</small>` : ''}
-                </div>
-                <button class="btn-del" onclick="delItem('riegos','${d.id}')">BORRAR</button>
-            </div>`;
-        });
+        allRiegos = [];
+        snap.forEach(d => allRiegos.push(d.data()));
+        checkAlerts(allCarpas, allRiegos);
     });
 
     window.delItem = async (col, id) => {
-        if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, col, id));
+        if(confirm("¿Eliminar?")) await deleteDoc(doc(db, col, id));
     };
 </script>
 </body>
