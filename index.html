@@ -2,68 +2,54 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Club de la Mielcita - Pro Dashboard</title>
-    <!-- Librerías de Gráficos y Firebase -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mielcita Pro - Gestión de Cultivo</title>
     <style>
-        :root { --negro: #0a0a0a; --oro: #D4AF37; --gris: #1a1a1a; --blanco: #f5f5f5; }
-        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; }
-        h1 { color: var(--oro); text-align: center; font-weight: 700; letter-spacing: 1px; margin-bottom: 30px; }
+        :root { --negro: #0a0a0a; --oro: #D4AF37; --gris: #1a1a1a; --blanco: #f5f5f5; --rojo: #ff4444; }
+        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; padding: 15px; padding-bottom: 50px; }
+        h1, h2 { color: var(--oro); text-align: center; text-transform: uppercase; letter-spacing: 2px; }
         
-        .card { background: var(--gris); border: 1px solid #333; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.8); }
-        .card h3 { color: var(--oro); margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; font-size: 1.1rem; }
-
-        input, select { width: 100%; padding: 14px; margin: 10px 0; background: #222; border: 1px solid #444; color: white; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        input:focus { border-color: var(--oro); outline: none; }
-
-        button { background: linear-gradient(45deg, #D4AF37, #FFD700); color: black; border: none; padding: 16px; width: 100%; font-weight: bold; border-radius: 10px; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        .card { background: var(--gris); border: 1px solid #333; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .flex { display: flex; gap: 10px; }
         
-        #chartContainer { height: 220px; margin-top: 10px; }
-        .log-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.85rem; display: flex; justify-content: space-between; }
-        .log-item span { color: var(--oro); font-weight: 600; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; background: #222; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        
+        .btn { background: var(--oro); color: black; border: none; padding: 12px; width: 100%; font-weight: bold; border-radius: 8px; margin-top: 5px; cursor: pointer; }
+        .btn-delete { background: var(--rojo); margin-top: 10px; font-size: 12px; padding: 5px; }
+        
+        .item-list { border-left: 3px solid var(--oro); padding-left: 10px; margin-top: 10px; position: relative; }
+        .tag { font-size: 10px; background: #333; padding: 2px 6px; border-radius: 4px; color: var(--oro); }
     </style>
 </head>
 <body>
 
-    <h1>EL CLUB DE LA MIELCITA</h1>
+    <h1>Mielcita Control v2</h1>
 
-    <!-- Registro de Cultivo -->
+    <!-- SECCIÓN CARPAS -->
     <div class="card">
-        <h3>Registro Manual</h3>
-        <select id="tipoAccion">
-            <option value="Riego">💧 Riego con Agua</option>
-            <option value="Nutrientes">🧪 Nutrientes (Mielcita Mix)</option>
-            <option value="Clima">🌡️ Ambiente / Otros</option>
-        </select>
-        <div style="display: flex; gap: 10px;">
-            <input type="number" id="ph" step="0.1" placeholder="pH">
-            <input type="number" id="ec" step="0.1" placeholder="EC">
-        </div>
-        <input type="text" id="notas" placeholder="Notas (Ej: Poda, dosis, carencias)">
-        <button id="btnGuardar">Guardar en la Nube</button>
+        <h2>🎪 Mis Carpas</h2>
+        <input type="text" id="carpaNombre" placeholder="Nombre (Ej: Carpa Vegetativo)">
+        <input type="text" id="carpaMedida" placeholder="Medida (Ej: 80x80x160)">
+        <button class="btn" id="btnNuevaCarpa">+ Registrar Carpa</button>
+        <div id="listaCarpas"></div>
     </div>
 
-    <!-- Gráfico de Salud -->
+    <!-- SECCIÓN PLANTAS -->
     <div class="card">
-        <h3>Evolución de pH</h3>
-        <div id="chartContainer">
-            <canvas id="phChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Historial -->
-    <div class="card">
-        <h3>Bitácora de Seguimiento</h3>
-        <div id="historial">Cargando datos del club...</div>
+        <h2>🌱 Mis Plantas</h2>
+        <select id="selectCarpa"><option value="">Seleccionar Carpa...</option></select>
+        <input type="text" id="plantaGenetica" placeholder="Genética (Ej: Gorilla Glue)">
+        <input type="text" id="plantaBanco" placeholder="Banco (Ej: RQS)">
+        <input type="date" id="plantaFecha">
+        <button class="btn" id="btnNuevaPlanta">+ Añadir Planta</button>
+        <div id="listaPlantas"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN DE FIREBASE[span_1](start_span)[span_1](end_span)
-        // Reemplaza estos valores con los de tu consola Firebase
+        // CONFIGURACIÓN FIREBASE (MANTÉN TUS CLAVES AQUÍ)
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
             authDomain: "TU_PROYECTO.firebaseapp.com",
@@ -76,58 +62,63 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Inicializar Gráfico
-        const ctx = document.getElementById('phChart').getContext('2d');
-        const phChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'pH', data: [], borderColor: '#D4AF37', backgroundColor: 'rgba(212, 175, 55, 0.1)', fill: true, tension: 0.4 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 5, max: 8 }, x: { display: false } } }
-        });
-
-        // Función Guardar[span_2](start_span)[span_2](end_span)
-        document.getElementById('btnGuardar').onclick = async () => {
-            const phVal = parseFloat(document.getElementById('ph').value);
-            if(!phVal) return alert("Por favor, ingresa el pH medido.");
-
-            try {
-                await addDoc(collection(db, "mielcita_logs"), {
-                    ph: phVal,
-                    ec: document.getElementById('ec').value || "N/A",
-                    tipo: document.getElementById('tipoAccion').value,
-                    notas: document.getElementById('notas').value,
-                    timestamp: new Date()
-                });
-                document.getElementById('ph').value = "";
-                document.getElementById('ec').value = "";
-                document.getElementById('notas').value = "";
-                alert("¡Registro guardado exitosamente!");
-            } catch (e) {
-                alert("Error al guardar: " + e.message);
-            }
+        // --- FUNCIONES DE CARPAS ---
+        document.getElementById('btnNuevaCarpa').onclick = async () => {
+            const nombre = document.getElementById('carpaNombre').value;
+            const medida = document.getElementById('carpaMedida').value;
+            if(!nombre) return;
+            await addDoc(collection(db, "carpas"), { nombre, medida });
+            document.getElementById('carpaNombre').value = "";
         };
 
-        // Escucha en Tiempo Real[span_3](start_span)[span_3](end_span)
-        const q = query(collection(db, "mielcita_logs"), orderBy("timestamp", "desc"), limit(12));
-        onSnapshot(q, (snapshot) => {
-            const historial = document.getElementById('historial');
-            historial.innerHTML = "";
-            const labels = [];
-            const dataPoints = [];
-
-            snapshot.docs.reverse().forEach(doc => {
-                const log = doc.data();
-                const hora = log.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                historial.innerHTML = `<div class="log-item"><span>${hora}</span> ${log.tipo} (pH: ${log.ph})</div>` + historial.innerHTML;
-                
-                labels.push(hora);
-                dataPoints.push(log.ph);
+        onSnapshot(collection(db, "carpas"), (snapshot) => {
+            const lista = document.getElementById('listaCarpas');
+            const select = document.getElementById('selectCarpa');
+            lista.innerHTML = "";
+            select.innerHTML = '<option value="">Seleccionar Carpa...</option>';
+            
+            snapshot.forEach(d => {
+                const c = d.data();
+                lista.innerHTML += `<div class="item-list">
+                    <b>${c.nombre}</b> (${c.medida})
+                    <button class="btn-delete" onclick="eliminarDoc('carpas', '${d.id}')">Eliminar</button>
+                </div>`;
+                select.innerHTML += `<option value="${d.id}">${c.nombre}</option>`;
             });
-
-            phChart.data.labels = labels;
-            phChart.data.datasets[0].data = dataPoints;
-            phChart.update();
         });
+
+        // --- FUNCIONES DE PLANTAS ---
+        document.getElementById('btnNuevaPlanta').onclick = async () => {
+            const carpaId = document.getElementById('selectCarpa').value;
+            const genetica = document.getElementById('plantaGenetica').value;
+            const banco = document.getElementById('plantaBanco').value;
+            const fecha = document.getElementById('plantaFecha').value;
+            
+            if(!carpaId || !genetica) return alert("Faltan datos");
+            
+            await addDoc(collection(db, "plantas"), { carpaId, genetica, banco, fecha });
+            document.getElementById('plantaGenetica').value = "";
+        };
+
+        onSnapshot(collection(db, "plantas"), (snapshot) => {
+            const lista = document.getElementById('listaPlantas');
+            lista.innerHTML = "";
+            snapshot.forEach(d => {
+                const p = d.data();
+                lista.innerHTML += `<div class="item-list">
+                    <b>${p.genetica}</b> <span class="tag">${p.banco}</span><br>
+                    <small>Inicio: ${p.fecha}</small>
+                    <button class="btn-delete" onclick="eliminarDoc('plantas', '${d.id}')">Eliminar</button>
+                </div>`;
+            });
+        });
+
+        // Función Global para Eliminar
+        window.eliminarDoc = async (col, id) => {
+            if(confirm("¿Eliminar permanentemente?")) {
+                await deleteDoc(doc(db, col, id));
+            }
+        };
     </script>
 </body>
 </html>
