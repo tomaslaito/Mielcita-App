@@ -1,78 +1,75 @@
-<!-- SECCIÓN: PLANTAS (GESTIÓN TÉCNICA) -->
-<div id="sec-plantas" class="container">
-    <div class="card-gestion">
-        <h4 id="p-form-title" style="color:var(--oro); margin:0">Nueva Planta</h4>
-        <input type="hidden" id="p-edit-id">
-        
-        <select id="p-sel-carpa"><option value="">Seleccionar Carpa</option></select>
-        <input type="text" id="p-gen" placeholder="Genética (Ej: Peyote Cookies)">
-        
-        <div style="background:#111; padding:12px; border-radius:10px; margin:10px 0; border:1px solid #333">
-            <label style="color:var(--oro); font-size:11px; text-transform:uppercase">Registro de Tiempos</label>
-            
-            <div style="margin-top:10px">
-                <small style="color:#888">Germinación (Inicio Vida):</small>
-                <input type="date" id="p-fec-germ">
-            </div>
-            
-            <div style="margin-top:10px">
-                <small style="color:#888">Inicio Vegetativo:</small>
-                <input type="date" id="p-fec-vege">
-            </div>
-            
-            <div style="margin-top:10px">
-                <small style="color:#888">Inicio Floración:</small>
-                <input type="date" id="p-fec-flora">
-            </div>
-        </div>
+<!-- ESTILOS ADICIONALES PARA EL MENÚ ⋮ -->
+<style>
+    .plant-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .options-btn { color: var(--oro); font-size: 24px; cursor: pointer; padding: 0 5px; }
+    
+    /* Modal de Historial */
+    .modal-historial {
+        display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: #111; border: 1px solid var(--oro); padding: 20px; border-radius: 15px;
+        z-index: 300; width: 85%; max-width: 400px; box-shadow: 0 0 20px rgba(0,0,0,0.9);
+    }
+    .modal-historial input { margin-bottom: 12px; }
+    .modal-historial label { color: var(--oro); font-size: 11px; text-transform: uppercase; }
+</style>
 
-        <button class="btn-oro" id="p-btn-main" onclick="savePlanta()">Añadir Planta</button>
-        <button class="btn-action btn-del" id="p-btn-cancel" style="display:none; width:100%; margin-top:10px" onclick="resetPlantaForm()">Cancelar Edición</button>
-    </div>
+<!-- MODAL PARA EDITAR HISTORIAL DE FECHAS -->
+<div class="overlay" id="modal-overlay" onclick="closeModal()"></div>
+<div class="modal-historial" id="p-modal">
+    <h4 style="color:var(--oro); margin-top:0">Historial de Ciclos</h4>
+    <input type="hidden" id="edit-p-id">
+    
+    <label>Germinación / Esqueje:</label>
+    <input type="date" id="hist-germ">
+    
+    <label>Inicio Vegetativo:</label>
+    <input type="date" id="hist-vege">
+    
+    <label>Inicio Floración:</label>
+    <input type="date" id="hist-flora">
+    
+    <label>Cosecha:</label>
+    <input type="date" id="hist-cosecha">
+    
+    <button class="btn-oro" onclick="updateHistorial()">Actualizar Historial</button>
+    <button class="btn-action btn-del" style="width:100%; margin-top:10px" onclick="closeModal()">Cerrar</button>
 </div>
 
 <script type="module">
-    // ... (Mantener la configuración de Firebase de los pasos anteriores)
+    // ... (Mantener configuración de Firebase anterior)
 
-    // FUNCIÓN: RESETEAR FORMULARIO (Crucial para que la edición funcione)
-    window.resetPlantaForm = () => {
-        document.getElementById('p-edit-id').value = "";
-        document.getElementById('p-gen').value = "";
-        document.getElementById('p-fec-germ').value = "";
-        document.getElementById('p-fec-vege').value = "";
-        document.getElementById('p-fec-flora').value = "";
-        document.getElementById('p-form-title').innerText = "Nueva Planta";
-        document.getElementById('p-btn-main').innerText = "Añadir Planta";
-        document.getElementById('p-btn-cancel').style.display = "none";
+    // FUNCIÓN PARA ABRIR EL MENÚ DE TRES PUNTITOS
+    window.openHistorial = (p) => {
+        document.getElementById('edit-p-id').value = p.id;
+        document.getElementById('hist-germ').value = p.fecha || "";
+        document.getElementById('hist-vege').value = p.fecVege || "";
+        document.getElementById('hist-flora').value = p.fecFlora || "";
+        document.getElementById('hist-cosecha').value = p.fecCosecha || "";
+        
+        document.getElementById('p-modal').style.display = "block";
+        document.getElementById('modal-overlay').style.display = "block";
     };
 
-    // FUNCIÓN: CARGAR PARA EDITAR (Corregida)
-    window.editPlanta = (id, carpaId, gen, germ, vege, flora) => {
-        navTo('plantas');
-        document.getElementById('p-edit-id').value = id;
-        document.getElementById('p-sel-carpa').value = carpaId;
-        document.getElementById('p-gen').value = gen;
-        document.getElementById('p-fec-germ').value = germ || "";
-        document.getElementById('p-fec-vege').value = vege || "";
-        document.getElementById('p-fec-flora').value = flora || "";
-        
-        document.getElementById('p-form-title').innerText = "Editando: " + gen;
-        document.getElementById('p-btn-main').innerText = "Actualizar Historial";
-        document.getElementById('p-btn-cancel').style.display = "block";
+    window.closeModal = () => {
+        document.getElementById('p-modal').style.display = "none";
+        document.getElementById('modal-overlay').style.display = "none";
     };
 
-    // BOTONES RÁPIDOS: VEGE Y FLORA (Verificados)
-    window.cambiarCiclo = async (id, nuevaEtapa) => {
-        const hoy = new Date().toISOString().split('T')[0];
-        const updates = { etapa: nuevaEtapa, fechaEtapa: hoy };
-        
-        if(nuevaEtapa === 'Vegetativo') updates.fecVege = hoy;
-        if(nuevaEtapa === 'Floración') updates.fecFlora = hoy;
+    // ACTUALIZAR TODAS LAS FECHAS AL INSTANTE
+    window.updateHistorial = async () => {
+        const id = document.getElementById('edit-p-id').value;
+        const updates = {
+            fecha: document.getElementById('hist-germ').value,
+            fecVege: document.getElementById('hist-vege').value,
+            fecFlora: document.getElementById('hist-flora').value,
+            fecCosecha: document.getElementById('hist-cosecha').value
+        };
         
         await updateDoc(doc(db, "plantas", id), updates);
+        closeModal();
     };
 
-    // RENDERIZADO DEL DASHBOARD (Optimizado)
+    // RENDERIZADO CON EL BOTÓN ⋮ A LA DERECHA
     const render = () => {
         const home = document.getElementById('home-render');
         home.innerHTML = "";
@@ -85,19 +82,21 @@
 
                 return `
                 <div class="plant-row">
-                    <div style="display:flex; justify-content:space-between; align-items:center">
-                        <span style="color:var(--oro); font-weight:bold; font-size:16px">🌱 ${p.genetica}</span>
-                        <span class="badge-oro" style="font-size:9px">${p.etapa || 'Germinación'}</span>
+                    <div class="plant-header">
+                        <div>
+                            <span style="color:var(--oro); font-weight:bold; font-size:16px">🌱 ${p.genetica}</span><br>
+                            <span class="badge-oro" style="font-size:9px; margin-top:4px">${p.etapa || 'Iniciando'}</span>
+                        </div>
+                        <div class="options-btn" onclick='openHistorial(${JSON.stringify(p)})'>⋮</div>
                     </div>
                     <div class="historial-item" style="margin-top:8px">
-                        ⏱️ <b>${diasEtapa} días</b> en ciclo actual<br>
-                        📅 Total: ${diasTotal} días de vida
+                        ⏱️ Ciclo actual: ${diasEtapa} días<br>
+                        📅 Vida total: ${diasTotal} días
                     </div>
-                    <div style="display:flex; gap:5px; margin-top:12px; flex-wrap:wrap">
-                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Vegetativo')">A VEGE</button>
-                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Floración')">A FLORA</button>
-                        <button class="btn-action btn-edit" onclick="editPlanta('${p.id}','${p.carpaId}','${p.genetica}','${p.fecha}','${p.fecVege || ''}','${p.fecFlora || ''}')">EDITAR FECHAS</button>
-                        <button class="btn-action btn-del" onclick="del('plantas','${p.id}')">X</button>
+                    <div style="display:flex; gap:5px; margin-top:12px">
+                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Vegetativo')">VEGE</button>
+                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Floración')">FLORA</button>
+                        <button class="btn-action btn-del" onclick="del('plantas','${p.id}')">BORRAR</button>
                     </div>
                 </div>`;
             }).join('');
@@ -105,13 +104,14 @@
             home.innerHTML += `
                 <div class="card-item" style="border-left: 4px solid var(--oro)">
                     <div onclick="const d = this.nextElementSibling; d.style.display = d.style.display === 'none' ? 'block' : 'none'">
-                        <h3 style="margin:0; color:var(--oro); text-transform:uppercase">${c.nombre}</h3>
-                        <small style="color:#666">${c.medida} • Inició: ${c.fecha}</small>
+                        <h3 style="margin:0; color:var(--oro)">${c.nombre}</h3>
+                        <small style="color:#666">${c.medida} • Clic para detalles</small>
                     </div>
                     <div style="display:none; margin-top:15px; border-top:1px solid #222; padding-top:10px">
-                        ${htmlPlants || '<small style="color:#444">No hay plantas registradas aquí.</small>'}
+                        ${htmlPlants || '<small>Sin plantas</small>'}
                     </div>
                 </div>`;
         });
     };
+    // ... (Resto de la lógica Firebase)
 </script>
