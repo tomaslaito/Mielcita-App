@@ -1,87 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mielcita Pro</title>
+    <style>
+        :root { --negro: #000000; --oro: #D4AF37; --gris-card: #1c1c1e; --blanco: #ffffff; --rojo: #ff3b30; --verde: #34c759; --azul: #007aff; }
+        body { background: var(--negro); color: var(--blanco); font-family: -apple-system, sans-serif; margin: 0; }
+        header { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #222; position: sticky; top: 0; background: var(--negro); z-index: 100; }
+        .menu-btn { font-size: 28px; color: var(--oro); cursor: pointer; }
+        .title { flex-grow: 1; text-align: center; color: var(--oro); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: #111; transition: 0.3s; z-index: 200; border-right: 1px solid var(--oro); padding-top: 60px; }
+        .sidebar.open { left: 0; }
+        .sidebar a { display: block; padding: 20px; color: white; text-decoration: none; border-bottom: 1px solid #222; font-size: 14px; text-transform: uppercase; }
+        .overlay { position: fixed; display: none; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
 
-<!-- SECCIÓN: PLANTAS (LOGICA DE CICLOS) -->
+        .container { padding: 20px; display: none; }
+        .container.active { display: block; }
+
+        .card-gestion { background: var(--gris-card); border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid #333; }
+        .card-item { background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 3px solid var(--oro); }
+        .btn-oro { background: var(--oro); color: black; border: none; padding: 14px; width: 100%; font-weight: bold; border-radius: 10px; margin-top: 10px; text-transform: uppercase; cursor: pointer; }
+        .btn-action { padding: 8px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid; background: none; cursor: pointer; margin-top: 5px; }
+        .btn-edit { color: var(--oro); border-color: var(--oro); }
+        .btn-del { color: var(--rojo); border-color: var(--rojo); }
+        .btn-blue { color: var(--azul); border-color: var(--azul); }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .badge-oro { background: var(--oro); color: black; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        
+        .plant-row { padding: 12px; background: #0a0a0a; border-radius: 8px; margin-top: 8px; border: 1px solid #222; }
+        .historial-item { font-size: 11px; color: #888; margin-top: 4px; display: block; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="title" id="header-title">MI CULTIVO</div>
+</header>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+<nav class="sidebar" id="sidebar">
+    <a href="#" onclick="navTo('home')">🏠 Dashboard</a>
+    <a href="#" onclick="navTo('carpas')">🎪 Carpas</a>
+    <a href="#" onclick="navTo('plantas')">🌱 Plantas</a>
+</nav>
+
+<!-- SECCIÓN: DASHBOARD -->
+<div id="sec-home" class="container active">
+    <div id="home-render"></div>
+</div>
+
+<!-- SECCIÓN: CARPAS -->
+<div id="sec-carpas" class="container">
+    <div class="card-gestion">
+        <h4 id="c-form-title" style="color:var(--oro); margin:0">Nueva Carpa</h4>
+        <input type="hidden" id="c-edit-id">
+        <input type="text" id="c-nom" placeholder="Nombre de Carpa">
+        <input type="text" id="c-med" placeholder="Medidas">
+        <input type="date" id="c-fec">
+        <button class="btn-oro" onclick="saveCarpa()">Guardar Carpa</button>
+    </div>
+    <div id="carpas-list-render"></div>
+</div>
+
+<!-- SECCIÓN: PLANTAS -->
 <div id="sec-plantas" class="container">
     <div class="card-gestion">
-        <h4 id="p-form-title" style="color:var(--oro); margin:0">Gestionar Planta</h4>
+        <h4 id="p-form-title" style="color:var(--oro); margin:0">Nueva Planta</h4>
         <input type="hidden" id="p-edit-id">
-        <select id="p-sel-carpa"><option>Seleccionar Carpa</option></select>
+        <select id="p-sel-carpa"><option value="">Seleccionar Carpa</option></select>
         <input type="text" id="p-gen" placeholder="Genética">
-        <input type="text" id="p-ban" placeholder="Banco">
-        
-        <div style="border: 1px solid #333; padding: 10px; border-radius: 8px; margin-top: 10px;">
-            <label style="font-size: 11px; color: var(--oro);">Fotoperiodo Actual:</label>
-            <select id="p-etapa-act">
-                <option value="Germinación">Germinación</option>
-                <option value="Vegetativo">Vegetativo (18/6)</option>
-                <option value="Floración">Floración (12/12)</option>
-            </select>
-            <label style="font-size: 11px; color: var(--oro);">Inició el:</label>
-            <input type="date" id="p-fec-inicio">
-        </div>
-        
+        <input type="date" id="p-fec" title="Fecha Germinación">
         <button class="btn-oro" onclick="savePlanta()">Guardar Planta</button>
-        <button class="btn-action btn-del" id="p-btn-cancel" style="display:none; width:100%" onclick="resetPlantaForm()">Cancelar</button>
     </div>
 </div>
 
 <script type="module">
-    // ... (Conexión Firebase anterior)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Nueva función para el cambio de fotoperiodo instantáneo
-    window.cambiarCicloInstantaneo = async (plantaId, nuevaEtapa) => {
-        const hoy = new Date().toISOString().split('T')[0];
-        const plantaRef = doc(db, "plantas", plantaId);
-        
-        try {
-            await updateDoc(plantaRef, {
-                etapaActual: nuevaEtapa,
-                fechaInicioEtapa: hoy,
-                // Guardamos el historial del cambio
-                [`historial_${nuevaEtapa}`]: hoy
-            });
-            alert(`Cambiado a ${nuevaEtapa} exitosamente.`);
-        } catch (e) {
-            console.error("Error al cambiar ciclo: ", e);
-        }
+    const firebaseConfig = {
+        apiKey: "AIzaSyD7ujVTiYTmi0nateG6j49g1",
+        authDomain: "mielcita-app.firebaseapp.com",
+        projectId: "mielcita-app",
+        storageBucket: "mielcita-app.firebasestorage.app",
+        messagingSenderId: "937808209169",
+        appId: "1:937808209169:web:f280acbc42dd07b1341604"
     };
 
-    // Renderizado actualizado con historial de fotoperiodo
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let carpas = [], plantas = [];
+
+    const calcDias = (f) => {
+        if(!f || f === "undefined") return 0;
+        const diff = new Date() - new Date(f);
+        return Math.max(0, Math.floor(diff / (1000*60*60*24)));
+    };
+
+    window.toggleMenu = () => {
+        const s = document.getElementById('sidebar');
+        s.classList.toggle('open');
+        document.getElementById('overlay').style.display = s.classList.contains('open') ? 'block' : 'none';
+    };
+
+    window.navTo = (s) => {
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        document.getElementById('sec-'+s).classList.add('active');
+        document.getElementById('header-title').innerText = s.toUpperCase();
+        if(document.getElementById('sidebar').classList.contains('open')) toggleMenu();
+    };
+
+    window.saveCarpa = async () => {
+        const id = document.getElementById('c-edit-id').value;
+        const data = { nombre: document.getElementById('c-nom').value, medida: document.getElementById('c-med').value, fecha: document.getElementById('c-fec').value };
+        if(!data.nombre || !data.fecha) return;
+        id ? await updateDoc(doc(db, "carpas", id), data) : await addDoc(collection(db, "carpas"), data);
+        document.getElementById('c-edit-id').value = ""; navTo('home');
+    };
+
+    window.savePlanta = async () => {
+        const id = document.getElementById('p-edit-id').value;
+        const data = { 
+            carpaId: document.getElementById('p-sel-carpa').value, 
+            genetica: document.getElementById('p-gen').value, 
+            fecha: document.getElementById('p-fec').value,
+            etapa: "Germinación",
+            fechaEtapa: document.getElementById('p-fec').value
+        };
+        if(!data.genetica || !data.carpaId) return;
+        id ? await updateDoc(doc(db, "plantas", id), data) : await addDoc(collection(db, "plantas"), data);
+        document.getElementById('p-edit-id').value = ""; navTo('home');
+    };
+
+    window.cambiarCiclo = async (id, nuevaEtapa) => {
+        const hoy = new Date().toISOString().split('T')[0];
+        await updateDoc(doc(db, "plantas", id), { etapa: nuevaEtapa, fechaEtapa: hoy });
+    };
+
+    window.del = async (col, id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, col, id)); };
+
     const render = () => {
         const home = document.getElementById('home-render');
-        home.innerHTML = "";
+        const pSel = document.getElementById('p-sel-carpa');
+        const cList = document.getElementById('carpas-list-render');
+        
+        home.innerHTML = ""; cList.innerHTML = "";
+        pSel.innerHTML = '<option value="">Seleccionar Carpa</option>';
 
         carpas.forEach(c => {
+            pSel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+            cList.innerHTML += `<div class="card-item"><b>${c.nombre}</b><br><small>${c.medida} • Inició: ${c.fecha}</small><br><button class="btn-action btn-del" onclick="del('carpas','${c.id}')">Borrar</button></div>`;
+            
             const pDeC = plantas.filter(p => p.carpaId === c.id);
-
-            const htmlPlants = pDeC.map(p => {
-                const diasEnEtapa = calcDias(p.fechaInicioEtapa || p.fecha);
-                return `
+            const htmlPlants = pDeC.map(p => `
                 <div class="plant-row">
                     <span style="color:var(--oro); font-weight:bold">🌱 ${p.genetica}</span>
-                    <span class="historial-item">📊 Etapa: <b>${p.etapaActual || 'Germinación'}</b></span>
-                    <span class="historial-item">📅 Inició: ${p.fechaInicioEtapa || p.fecha} (${diasEnEtapa} días en este ciclo)</span>
-                    
-                    <div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap">
-                        <button class="btn-action btn-blue" onclick="cambiarCicloInstantaneo('${p.id}', 'Vegetativo')">A VEGE</button>
-                        <button class="btn-action btn-blue" onclick="cambiarCicloInstantaneo('${p.id}', 'Floración')">A FLORA</button>
-                        <button class="btn-action btn-edit" onclick='editPlanta(${JSON.stringify(p)})'>EDITAR</button>
+                    <span class="historial-item">📊 Etapa: <b>${p.etapa || 'Germinación'}</b></span>
+                    <span class="historial-item">⏳ Días en etapa: ${calcDias(p.fechaEtapa)} | Total: ${calcDias(p.fecha)}</span>
+                    <div style="display:flex; gap:5px; margin-top:8px">
+                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Vegetativo')">VEGE</button>
+                        <button class="btn-action btn-blue" onclick="cambiarCiclo('${p.id}', 'Floración')">FLORA</button>
+                        <button class="btn-action btn-del" onclick="del('plantas','${p.id}')">BORRAR</button>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
 
             home.innerHTML += `
                 <div class="card-item">
                     <div onclick="const d = this.nextElementSibling; d.style.display = d.style.display === 'none' ? 'block' : 'none'">
                         <span class="badge-oro">Carpa Activa</span>
                         <h3 style="margin:10px 0 5px 0; color:var(--oro)">${c.nombre}</h3>
-                        <small>${c.medida} • Clic para ver ciclos</small>
+                        <small>${c.medida} • Inició: ${c.fecha || 'N/A'} (${calcDias(c.fecha)}d)</small>
                     </div>
-                    <div style="display:none; margin-top:10px; border-top:1px solid #333; padding-top:10px">
-                        ${htmlPlants || '<p style="font-size:11px; color:#555">Sin plantas.</p>'}
-                    </div>
+                    <div style="display:none; margin-top:10px; border-top:1px solid #333; padding-top:10px">${htmlPlants || '<small>Sin plantas</small>'}</div>
                 </div>`;
         });
     };
 
-    // ... (Resto de funciones de Firebase)
+    onSnapshot(collection(db, "carpas"), s => { carpas = s.docs.map(d => ({id:d.id, ...d.data()})); render(); });
+    onSnapshot(collection(db, "plantas"), s => { plantas = s.docs.map(d => ({id:d.id, ...d.data()})); render(); });
 </script>
+</body>
+</html>
