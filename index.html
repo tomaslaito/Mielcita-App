@@ -1,71 +1,87 @@
-<!-- SECCIÓN: CARPAS (REGISTRO E HISTORIAL) -->
-<div id="sec-carpas" class="container">
-    <!-- Formulario de Entrada -->
-    <div class="card-gestion">
-        <h4 id="c-form-title" style="color:var(--oro); margin:0">Nueva Carpa</h4>
-        <input type="hidden" id="c-edit-id">
-        <input type="text" id="c-nom" placeholder="Nombre (Ej: Carpa 1)">
-        <input type="text" id="c-med" placeholder="Medidas (Ej: 80x80)">
-        <input type="date" id="c-fec">
-        <button class="btn-oro" id="c-btn-save" onclick="saveCarpa()">Guardar Carpa</button>
-        <button class="btn-action btn-del" id="c-btn-cancel" style="display:none; width:100%; margin-top:10px" onclick="resetCarpaForm()">Cancelar Edición</button>
-    </div>
 
-    <!-- Historial de Carpas -->
-    <div id="carpas-historial-render">
-        <!-- Aquí se renderizan las carpas registradas -->
+<!-- SECCIÓN: PLANTAS (LOGICA DE CICLOS) -->
+<div id="sec-plantas" class="container">
+    <div class="card-gestion">
+        <h4 id="p-form-title" style="color:var(--oro); margin:0">Gestionar Planta</h4>
+        <input type="hidden" id="p-edit-id">
+        <select id="p-sel-carpa"><option>Seleccionar Carpa</option></select>
+        <input type="text" id="p-gen" placeholder="Genética">
+        <input type="text" id="p-ban" placeholder="Banco">
+        
+        <div style="border: 1px solid #333; padding: 10px; border-radius: 8px; margin-top: 10px;">
+            <label style="font-size: 11px; color: var(--oro);">Fotoperiodo Actual:</label>
+            <select id="p-etapa-act">
+                <option value="Germinación">Germinación</option>
+                <option value="Vegetativo">Vegetativo (18/6)</option>
+                <option value="Floración">Floración (12/12)</option>
+            </select>
+            <label style="font-size: 11px; color: var(--oro);">Inició el:</label>
+            <input type="date" id="p-fec-inicio">
+        </div>
+        
+        <button class="btn-oro" onclick="savePlanta()">Guardar Planta</button>
+        <button class="btn-action btn-del" id="p-btn-cancel" style="display:none; width:100%" onclick="resetPlantaForm()">Cancelar</button>
     </div>
 </div>
 
 <script type="module">
-    // ... (Mantener inicialización de Firebase igual a la versión anterior)
+    // ... (Conexión Firebase anterior)
 
-    // Función para resetear el formulario de carpas
-    window.resetCarpaForm = () => {
-        document.getElementById('c-edit-id').value = "";
-        document.getElementById('c-nom').value = "";
-        document.getElementById('c-med').value = "";
-        document.getElementById('c-fec').value = "";
-        document.getElementById('c-form-title').innerText = "Nueva Carpa";
-        document.getElementById('c-btn-save').innerText = "Guardar Carpa";
-        document.getElementById('c-btn-cancel').style.display = "none";
+    // Nueva función para el cambio de fotoperiodo instantáneo
+    window.cambiarCicloInstantaneo = async (plantaId, nuevaEtapa) => {
+        const hoy = new Date().toISOString().split('T')[0];
+        const plantaRef = doc(db, "plantas", plantaId);
+        
+        try {
+            await updateDoc(plantaRef, {
+                etapaActual: nuevaEtapa,
+                fechaInicioEtapa: hoy,
+                // Guardamos el historial del cambio
+                [`historial_${nuevaEtapa}`]: hoy
+            });
+            alert(`Cambiado a ${nuevaEtapa} exitosamente.`);
+        } catch (e) {
+            console.error("Error al cambiar ciclo: ", e);
+        }
     };
 
-    // Función para cargar datos en el formulario para editar
-    window.editCarpaFromList = (id, nom, med, fec) => {
-        document.getElementById('c-edit-id').value = id;
-        document.getElementById('c-nom').value = nom;
-        document.getElementById('c-med').value = med;
-        document.getElementById('c-fec').value = fec;
-        document.getElementById('c-form-title').innerText = "Editando Carpa";
-        document.getElementById('c-btn-save').innerText = "Actualizar Carpa";
-        document.getElementById('c-btn-cancel').style.display = "block";
-        window.scrollTo(0,0); // Sube al formulario
-    };
-
-    // Renderizado actualizado para incluir el historial en la sección de carpas
-    const renderCarpasHistorial = () => {
-        const historialDiv = document.getElementById('carpas-historial-render');
-        historialDiv.innerHTML = '<h5 style="color:var(--oro); margin: 10px 0;">Historial de Carpas</h5>';
+    // Renderizado actualizado con historial de fotoperiodo
+    const render = () => {
+        const home = document.getElementById('home-render');
+        home.innerHTML = "";
 
         carpas.forEach(c => {
-            historialDiv.innerHTML += `
-                <div class="card-item">
-                    <b style="color:var(--oro); font-size:16px;">${c.nombre}</b><br>
-                    <small>${c.medida} • Inicio: ${c.fecha}</small>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn-action btn-edit" onclick="editCarpaFromList('${c.id}','${c.nombre}','${c.medida}','${c.fecha}')">EDITAR</button>
-                        <button class="btn-action btn-del" onclick="del('carpas','${c.id}')">ELIMINAR</button>
+            const pDeC = plantas.filter(p => p.carpaId === c.id);
+
+            const htmlPlants = pDeC.map(p => {
+                const diasEnEtapa = calcDias(p.fechaInicioEtapa || p.fecha);
+                return `
+                <div class="plant-row">
+                    <span style="color:var(--oro); font-weight:bold">🌱 ${p.genetica}</span>
+                    <span class="historial-item">📊 Etapa: <b>${p.etapaActual || 'Germinación'}</b></span>
+                    <span class="historial-item">📅 Inició: ${p.fechaInicioEtapa || p.fecha} (${diasEnEtapa} días en este ciclo)</span>
+                    
+                    <div style="margin-top:10px; display:flex; gap:5px; flex-wrap:wrap">
+                        <button class="btn-action btn-blue" onclick="cambiarCicloInstantaneo('${p.id}', 'Vegetativo')">A VEGE</button>
+                        <button class="btn-action btn-blue" onclick="cambiarCicloInstantaneo('${p.id}', 'Floración')">A FLORA</button>
+                        <button class="btn-action btn-edit" onclick='editPlanta(${JSON.stringify(p)})'>EDITAR</button>
                     </div>
-                </div>
-            `;
+                </div>`;
+            }).join('');
+
+            home.innerHTML += `
+                <div class="card-item">
+                    <div onclick="const d = this.nextElementSibling; d.style.display = d.style.display === 'none' ? 'block' : 'none'">
+                        <span class="badge-oro">Carpa Activa</span>
+                        <h3 style="margin:10px 0 5px 0; color:var(--oro)">${c.nombre}</h3>
+                        <small>${c.medida} • Clic para ver ciclos</small>
+                    </div>
+                    <div style="display:none; margin-top:10px; border-top:1px solid #333; padding-top:10px">
+                        ${htmlPlants || '<p style="font-size:11px; color:#555">Sin plantas.</p>'}
+                    </div>
+                </div>`;
         });
     };
 
-    // Actualizar los listeners de Firebase para que llamen a la nueva función de render
-    onSnapshot(collection(db, "carpas"), s => { 
-        carpas = s.docs.map(d => ({id:d.id, ...d.data()})); 
-        render(); // Renderiza el Dashboard
-        renderCarpasHistorial(); // Renderiza el historial en la sección de carpas
-    });
+    // ... (Resto de funciones de Firebase)
 </script>
